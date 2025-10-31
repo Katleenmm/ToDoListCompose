@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.edu.satc.todolistcompose.data.TaskData
+import br.edu.satc.todolistcompose.entidade.Task
 import br.edu.satc.todolistcompose.mockTaskData
 import br.edu.satc.todolistcompose.ui.components.TaskCard
 import br.edu.satc.todolistcompose.ui.theme.ToDoListComposeTheme
@@ -38,28 +39,38 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true)
 @Composable
 fun PreviewHomeScreen() {
-    ToDoListComposeTheme { HomeScreen() }
+    ToDoListComposeTheme {
+        HomeScreen(
+            tasks = listOf(
+                TaskData(title = "Tarefa de teste", description = "Descrição", complete = false)
+            ),
+            onAddTask = { _, _ -> }
+        )
+    }
 }
 
+
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    tasks: List<TaskData>,
+    onAddTask: (String, String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 8.dp)
     ) {
         // Conteúdo principal (lista de items)
-        Content()
+        Content(tasks)
 
         // Dialog new Task
-        NewTask()
+        NewTask(onAddTask)
     }
 }
 
 @Composable
-fun Content() {
+fun Content(tasks: List<TaskData>) {
     LazyColumn {
-        items(items = mockTaskData) { task ->
+        items(items = tasks) { task ->
             TaskCard(taskData = task, onTaskCheckedChange = { /*TODO*/ })
         }
     }
@@ -71,7 +82,7 @@ fun Content() {
  */
 
 @Composable
-fun NewTask() {
+fun NewTask(onAddTask: (String, String) -> Unit) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     var taskTitle by remember { mutableStateOf("") }
@@ -119,22 +130,15 @@ fun NewTask() {
                 Button(
                     modifier = Modifier.padding(top = 4.dp),
                     onClick = {
+                        if(taskTitle.isNotBlank()){
+                            onAddTask(taskTitle, taskDescription)
+                        }
                         // Aqui salvaríamos a nova Task
                         scope.launch { sheetState.hide() }.invokeOnCompletion {
                             if (!sheetState.isVisible) {
                                 showBottomSheet = false
                             }
                         }
-
-                        // Salva nova task
-                        mockTaskData.add(
-                            TaskData(
-                                title = taskTitle,
-                                description = taskDescription,
-                                complete = false
-                            )
-                        )
-
                         // Limpa os campos
                         taskTitle = ""
                         taskDescription = ""
